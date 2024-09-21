@@ -1,2 +1,2 @@
-# Shubert_Piyavskii
+# Shubert Piyavskii
 Shubert Piyavskii Algorithm Animation
