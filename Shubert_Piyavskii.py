@@ -95,18 +95,14 @@ class Shubert_Piyavskii():
         line3, = self.ax.plot([], [], lw=2, color='b', linestyle='dashed')
         line4, = self.ax.plot([], [], lw=2, color='b')
         line5, = self.ax.plot([], [], lw=2, color='b')
-        line6, = self.ax.plot([], [], lw=3, color='w')
-        line7, = self.ax.plot([], [], lw=3, color='w')
-        line8, = self.ax.plot([], [], lw=3, color='w')
 
         canvas = FigureCanvasTkAgg(self.fig, master=self.root)
         canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 
         num_sections = 3
         points_per_section = int(self.num_points / num_sections)
-        slope1 = -(intersection[1] - self.function(left_x)) / (intersection[0] - left_x)
+        slope1 = (intersection[1] - self.function(left_x)) / (intersection[0] - left_x)
         slope2 = -slope1
-        delta = 0.02
         
         def animate(i):
             if ((i / points_per_section) <= 1):
@@ -118,8 +114,8 @@ class Shubert_Piyavskii():
                 y = np.array([i/points_per_section * (intersection[1] - self.function(right_x)) + self.function(right_x), self.function(right_x)])
                 line2.set_data(x, y)
 
-                if ((i / points_per_section) == 1):
-                    time.sleep(1)
+                # if ((i / points_per_section) == 1):
+                #     time.sleep(1)
             
             elif ((i / points_per_section) <= 2):
                 x = np.array([intersection[0], intersection[0]])
@@ -139,10 +135,7 @@ class Shubert_Piyavskii():
                 y = np.array([y_0, y_1])
                 
                 line4.set_data(x, y)
-
-                delta_x = delta * (x_1 - intersection[0])
-                delta_y = slope1 * delta_x
-                line6.set_data([intersection[0], x_1 - delta_x], [intersection[1], y_1 - delta_y] )
+                line1.set_data([left_x, x_1], [self.function(left_x), y_1])
 
                 x_0 = intersection[0]
                 y_0 = (i-2*points_per_section)/points_per_section * (self.function(intersection[0]) - intersection[1]) + intersection[1]
@@ -153,40 +146,36 @@ class Shubert_Piyavskii():
                 y = np.array([y_0, y_1])
 
                 line5.set_data(x, y)
+                line2.set_data([x_1, right_x], [y_1, self.function(right_x)])
 
-                delta_x = delta * (x_1 - intersection[0])
-                delta_y = slope2 * delta_x
-                line7.set_data([intersection[0], x_1 - delta_x], [intersection[1], y_1 - delta_y] )
+                line3.set_data([intersection[0], x_0], [self.function(x_0), y_0])
 
-                delta_y = delta * (self.function(intersection[0]) - intersection[1])
-                line8.set_data([intersection[0], x_0], [intersection[1], y_0 - delta_y])
-
-            return line1, line2, line3, line4, line5, line6, line7, line8
+            return line1, line2, line3, line4, line5
 
         anim = animation.FuncAnimation(self.fig, animate, frames=self.num_points, interval=2, blit=True, repeat=False)
 
         Tk.mainloop()
 
-    def animate_sample_line(self, intersection):
-        line3, = self.ax.plot([], [], lw=2, color='b', linestyle='dashed')
+    # def animate_sample_line(self, intersection):
+    #     line3, = self.ax.plot([], [], lw=2, color='b', linestyle='dashed')
 
-        canvas = FigureCanvasTkAgg(self.fig, master=self.root)
-        canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+    #     canvas = FigureCanvasTkAgg(self.fig, master=self.root)
+    #     canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 
-        def init():
-            line3.set_data([], [])
-            return line3,
+    #     def init():
+    #         line3.set_data([], [])
+    #         return line3,
 
-        def animate(i):
-            x = np.array([intersection[0], intersection[0]])
-            y = np.array([intersection[1], i/self.num_points * (intersection[0] - intersection[1]) + intersection[1]])
-            line3.set_data(x, y)
+    #     def animate(i):
+    #         x = np.array([intersection[0], intersection[0]])
+    #         y = np.array([intersection[1], i/self.num_points * (intersection[0] - intersection[1]) + intersection[1]])
+    #         line3.set_data(x, y)
 
-            return line3,
+    #         return line3,
 
-        anim = animation.FuncAnimation(self.fig, animate, init_func=init,frames=self.num_points, interval=2, blit=True, repeat=False)
+    #     anim = animation.FuncAnimation(self.fig, animate, init_func=init,frames=self.num_points, interval=2, blit=True, repeat=False)
 
-        Tk.mainloop()
+    #     Tk.mainloop()
 
 if (__name__ == "__main__"):
     def test_func(x):
