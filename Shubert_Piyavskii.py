@@ -185,8 +185,6 @@ class Shubert_Piyavskii():
             section_number = int(i / frames_per_section)
             intersection_number = int((i - frames_per_section) / (2 * frames_per_section))
 
-            # print("LINE: " + str(int(3*intersection_number)+2))
-
             if (i <= frames_per_section):
                 x = np.array([left_x, (i)/frames_per_section * (intersections[0][0] - left_x) + left_x])
                 y = np.array([self.function(left_x), (i)/frames_per_section * (intersections[0][1] - self.function(left_x)) + self.function(left_x)])
@@ -203,33 +201,29 @@ class Shubert_Piyavskii():
                 if (section_number % 2 == 1):
                     x = np.array([intersections[intersection_number][0], intersections[intersection_number][0]])
                     y = np.array([intersections[intersection_number][1], (i-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]])
-                    lines[int(3*intersection_number)+2].set_data(x, y)
-                    # print(int(3*intersection_number)+2)
+                    lines[int(3*intersection_number)+2].set_data(x, y) # Draw Vertical Sample Point
                 else:
-                    slope1 = self.lipschitz_constant
-                    slope2 = -slope1
+                    x_0l = intersections[intersection_number][0]
+                    y_0l = (i-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]
+                    x_1l = (1 / (2 * -self.lipschitz_constant)) * (-self.lipschitz_constant * intersections[intersection_number][0] + -self.lipschitz_constant * x_0l + y_0l - intersections[intersection_number][1])
+                    y_1l = -self.lipschitz_constant * (x_1l - intersections[intersection_number][0]) + intersections[intersection_number][1]
+                    xl = np.array([x_0l, x_1l])
+                    yl = np.array([y_0l, y_1l])
 
-                    x_0 = intersections[intersection_number][0]
-                    y_0 = (i-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]
-                    x_1 = (1 / (2 * slope1)) * (slope1 * intersections[intersection_number][0] + slope1 * x_0 + y_0 - intersections[intersection_number][1])
-                    y_1 = slope1 * (x_1 - intersections[intersection_number][0]) + intersections[intersection_number][1]
-
-                    x = np.array([x_0, x_1])
-                    y = np.array([y_0, y_1])
+                    x_0r = intersections[intersection_number][0]
+                    y_0r = (i-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]
+                    x_1r = (1 / (2 * self.lipschitz_constant)) * (self.lipschitz_constant * intersections[intersection_number][0] + self.lipschitz_constant * x_0r + y_0r - intersections[intersection_number][1])
+                    y_1r = self.lipschitz_constant * (x_1r - intersections[intersection_number][0]) + intersections[intersection_number][1]
+                    xr = np.array([x_0r, x_1r])
+                    yr = np.array([y_0r, y_1r])
                     
-                    lines[int(3*intersection_number)+3].set_data(x, y)
+                    lines[int(3*intersection_number)+4].set_data(xl, yl) # Draw New Left Line
+                    lines[int(3*intersection_number)+3].set_data(xr, yr) # Draw New Right Line
 
-                    x_0 = intersections[intersection_number][0]
-                    y_0 = (i-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]
-                    x_1 = (1 / (2 * slope2)) * (slope2 * intersections[intersection_number][0] + slope2 * x_0 + y_0 - intersections[intersection_number][1])
-                    y_1 = slope2 * (x_1 - intersections[intersection_number][0]) + intersections[intersection_number][1]
+                    x = np.array([intersections[intersection_number][0], intersections[intersection_number][0]])
+                    y = np.array([self.function(intersections[intersection_number][0]), (i-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]])
+                    lines[int(3*intersection_number)+2].set_data(x, y) # Erase Vertical Sample Point
 
-                    x = np.array([x_0, x_1])
-                    y = np.array([y_0, y_1])
-
-                    lines[int(3*intersection_number)+4].set_data(x, y)
-
-                    # lines[int(3*intersection_number)+2].set_data([intersection[0], x_0], [self.function(x_0), y_0])
             return lines
 
         anim = animation.FuncAnimation(self.fig, animate, frames=num_frames, interval=2, blit=True, repeat=False)
