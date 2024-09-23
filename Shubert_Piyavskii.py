@@ -158,19 +158,30 @@ class Shubert_Piyavskii():
 
     def animate1(self, intersections, left_x, right_x):
         function_samples = 5000
-        frames_per_section = 100
+        frames_per_section = 200
         num_sections = len(intersections) * 2 + 1
         num_frames = int(frames_per_section * num_sections) # index "i" will go up to num_frames - 1
 
-        num_lines = len(intersections) * 3 + 2
+        num_lines = len(intersections) * 5 + 2
         lines = []
+
+        # Line 0, 1 = initial lines
+        # Line 5n + 2 = sample
+        # Line 5n + 3 and 5n + 4 = left and right lines
+        # Line 5n + 5 and 5n + 6 = white eraser lines
 
         for line in range(num_lines):
             # print(((line - 2)) % 3)
-            if ((line - 2) % 3 == 0):
-                line, = self.ax.plot([], [], lw=self.lw, color='b', linestyle='dashed')
+            if ((line - 2) % 5 == 0):
+                line, = self.ax.plot([], [], lw=self.lw, color='b', linestyle='dashed', zorder=0)
+            elif ((line - 1) % 5 == 0 and (line != 1)):
+                line, = self.ax.plot([], [], lw=3*self.lw, color='white',zorder=0)
+            elif ((line) % 5 == 0 and (line != 0)):
+                line, = self.ax.plot([], [], lw=3*self.lw, color='white', zorder=0)
+            elif (line == 0 or line == 1):
+                line, = self.ax.plot([], [], lw=self.lw, color='b', zorder=0)
             else:
-                line, = self.ax.plot([], [], lw=self.lw, color='b')
+                line, = self.ax.plot([], [], lw=self.lw, color='b', zorder=0)
             lines.append(line)
 
         x = np.array([self.lower_bound + (self.upper_bound - self.lower_bound)*(i/function_samples) for i in range(int(function_samples))])
@@ -181,7 +192,7 @@ class Shubert_Piyavskii():
         canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 
         def animate(i):
-            # Based on it calculate the section number and the intersection number
+            # Based on "i" calculate the section number and the intersection number
             section_number = int(i / frames_per_section)
             intersection_number = int((i - frames_per_section) / (2 * frames_per_section))
 
@@ -201,7 +212,7 @@ class Shubert_Piyavskii():
                 if (section_number % 2 == 1):
                     x = np.array([intersections[intersection_number][0], intersections[intersection_number][0]])
                     y = np.array([intersections[intersection_number][1], (i-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]])
-                    lines[int(3*intersection_number)+2].set_data(x, y) # Draw Vertical Sample Point
+                    lines[int(5*intersection_number)+2].set_data(x, y) # Draw Vertical Sample Point
                 else:
                     x_0l = intersections[intersection_number][0]
                     y_0l = (i-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]
@@ -216,17 +227,25 @@ class Shubert_Piyavskii():
                     y_1r = self.lipschitz_constant * (x_1r - intersections[intersection_number][0]) + intersections[intersection_number][1]
                     xr = np.array([x_0r, x_1r])
                     yr = np.array([y_0r, y_1r])
-                    
-                    lines[int(3*intersection_number)+4].set_data(xl, yl) # Draw New Left Line
-                    lines[int(3*intersection_number)+3].set_data(xr, yr) # Draw New Right Line
+
+                    lines[int(5*intersection_number)+5].set_data([x_1l, intersections[intersection_number][0]],[y_1l, intersections[intersection_number][1]]) # Erase Left Line
+                    lines[int(5*intersection_number)+6].set_data([x_1r, intersections[intersection_number][0]],[y_1r, intersections[intersection_number][1]]) # Erase Right Line
+
+                    lines[int(5*intersection_number)+3].set_zorder(2.5)
+                    lines[int(5*intersection_number)+4].set_zorder(2.5)
+                    lines[int(5*intersection_number)-2].set_zorder(0)
+                    lines[int(5*intersection_number)-1].set_zorder(0)
+
+                    lines[int(5*intersection_number)+3].set_data(xl, yl) # Draw New Left Line
+                    lines[int(5*intersection_number)+4].set_data(xr, yr) # Draw New Right Line
 
                     x = np.array([intersections[intersection_number][0], intersections[intersection_number][0]])
                     y = np.array([self.function(intersections[intersection_number][0]), (i-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]])
-                    lines[int(3*intersection_number)+2].set_data(x, y) # Erase Vertical Sample Point
+                    lines[int(5*intersection_number)+2].set_data(x, y) # Erase Vertical Sample Point
 
             return lines
 
-        anim = animation.FuncAnimation(self.fig, animate, frames=num_frames, interval=2, blit=True, repeat=False)
+        anim = animation.FuncAnimation(self.fig, animate, frames=num_frames, interval=.5, blit=True, repeat=False)
         Tk.mainloop()
 
 if (__name__ == "__main__"):
