@@ -21,7 +21,6 @@ class Shubert_Piyavskii():
 
         self.fig = plt.Figure(dpi=100)
         self.ax = self.fig.add_subplot(xlim=(self.lower_bound - .1 * (self.upper_bound - self.lower_bound), self.upper_bound + .1 * (self.upper_bound - self.lower_bound)), ylim=(-10, 2)) 
-        self.num_points = 999
         self.lw = 2
 
         self.root = Tk.Tk()
@@ -88,75 +87,7 @@ class Shubert_Piyavskii():
         for i in range(len(self.intersection_xs)):
             self.plot_intersection([self.intersection_xs[i], self.intersection_ys[i]], self.sampled_xs[i], self.sampled_xs[i+1])
 
-    
-    def animate(self, intersection, left_x, right_x):
-        x = np.array([self.lower_bound + (self.upper_bound - self.lower_bound)*(i/self.num_points) for i in range(int(self.num_points))])
-        y = np.array([self.function(x) for x in [self.lower_bound + (self.upper_bound - self.lower_bound)*(i/self.num_points) for i in range(int(self.num_points))]])
-        line0, = self.ax.plot(x, y, lw=self.lw, color='orange')
-
-        line1, = self.ax.plot([], [], lw=self.lw, color='b')
-        line2, = self.ax.plot([], [], lw=self.lw, color='b')
-        line3, = self.ax.plot([], [], lw=self.lw, color='b', linestyle='dashed')
-        line4, = self.ax.plot([], [], lw=self.lw, color='b')
-        line5, = self.ax.plot([], [], lw=self.lw, color='b')
-
-        canvas = FigureCanvasTkAgg(self.fig, master=self.root)
-        canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
-
-        num_sections = 3
-        points_per_section = int(self.num_points / num_sections)
-        slope1 = (intersection[1] - self.function(left_x)) / (intersection[0] - left_x)
-        slope2 = -slope1
-        
-        def animate(i):
-            if ((i / points_per_section) <= 1):
-                x = np.array([left_x, i/points_per_section * (intersection[0] - left_x) + left_x])
-                y = np.array([self.function(left_x), i/points_per_section * (intersection[1] - self.function(left_x)) + self.function(left_x)])
-                line1.set_data(x, y)
-
-                x = np.array([i/points_per_section * (intersection[0] - right_x) + right_x, right_x])
-                y = np.array([i/points_per_section * (intersection[1] - self.function(right_x)) + self.function(right_x), self.function(right_x)])
-                line2.set_data(x, y)
-            
-            elif ((i / points_per_section) <= 2):
-                x = np.array([intersection[0], intersection[0]])
-                y = np.array([intersection[1], (i-points_per_section)/points_per_section * (self.function(intersection[0]) - intersection[1]) + intersection[1]])
-                line3.set_data(x, y)
-
-                if ((i / points_per_section) == 2):
-                    time.sleep(0)
-
-            elif ((i / points_per_section) <= 3):
-                x_0 = intersection[0]
-                y_0 = (i-2*points_per_section)/points_per_section * (self.function(intersection[0]) - intersection[1]) + intersection[1]
-                x_1 = (1 / (2 * slope1)) * (slope1 * intersection[0] + slope1 * x_0 + y_0 - intersection[1])
-                y_1 = slope1 * (x_1 - intersection[0]) + intersection[1]
-
-                x = np.array([x_0, x_1])
-                y = np.array([y_0, y_1])
-                
-                line4.set_data(x, y)
-                line1.set_data([left_x, x_1], [self.function(left_x), y_1])
-
-                x_0 = intersection[0]
-                y_0 = (i-2*points_per_section)/points_per_section * (self.function(intersection[0]) - intersection[1]) + intersection[1]
-                x_1 = (1 / (2 * slope2)) * (slope2 * intersection[0] + slope2 * x_0 + y_0 - intersection[1])
-                y_1 = slope2 * (x_1 - intersection[0]) + intersection[1]
-
-                x = np.array([x_0, x_1])
-                y = np.array([y_0, y_1])
-
-                line5.set_data(x, y)
-                line2.set_data([x_1, right_x], [y_1, self.function(right_x)])
-
-                line3.set_data([intersection[0], x_0], [self.function(x_0), y_0])
-
-            return [line1, line2, line3, line4, line5]
-
-        anim = animation.FuncAnimation(self.fig, animate, frames=self.num_points, interval=2, blit=True, repeat=False)
-        Tk.mainloop()
-
-    def animate1(self, intersections, left_x, right_x):
+    def animate(self, intersections, left_x, right_x):
         function_samples = 5000
         frames_per_section = 200
         num_sections = len(intersections) * 2 + 1
@@ -167,12 +98,10 @@ class Shubert_Piyavskii():
         lines = []
 
         # Line 0, 1 = initial lines
-        # Line 5n + 2 = sample
-        # Line 5n + 3 and 5n + 4 = left and right lines
-        # Line 5n + 5 and 5n + 6 = white eraser lines
+        # Line 3n + 2 = sample
+        # Line 3n + 3 and 3n + 4 = left and right lines
 
         for line in range(num_lines):
-            # print(((line - 2)) % 3)
             if ((line - 2) % lines_per_intersection == 0):
                 line, = self.ax.plot([], [], lw=self.lw, color='b', linestyle='dashed', zorder=0)
             elif (line == 0 or line == 1):
@@ -230,31 +159,22 @@ class Shubert_Piyavskii():
                             x_data = lines[line_num].get_xdata()
                             y_data = lines[line_num].get_ydata()
 
-                            print(intersections[intersection_number])
-                            print(lines[line_num].get_xdata())
-                            print(lines[line_num].get_ydata())
-                            print()
-
                             if ((np.isclose(x_data, intersections[intersection_number][0], atol=0.01).any()) and (np.isclose(y_data, intersections[intersection_number][1], atol=0.01).any())):
                                 
                                 if (x_data[0] + x_data[1] < 2*intersections[intersection_number][0]):
                                     self.left_line_num = line_num
                                     if (x_data[0] < intersections[intersection_number][0]):
-                                        print("HERE1")
                                         self.keep_left_x = x_data[0]
                                         self.keep_left_y = y_data[0]
                                     else:
-                                        print("HERE2")
                                         self.keep_left_x = x_data[1]
                                         self.keep_left_y = y_data[1]
                                 if (x_data[0] + x_data[1] > 2*intersections[intersection_number][0]):
                                     self.right_line_num = line_num
                                     if (x_data[0] > intersections[intersection_number][0]):
-                                        print("HERE3")
                                         self.keep_right_x = x_data[0]
                                         self.keep_right_y = y_data[0]
                                     else:
-                                        print("HERE4")
                                         self.keep_right_x = x_data[1]
                                         self.keep_right_y = y_data[1]
 
@@ -267,14 +187,6 @@ class Shubert_Piyavskii():
                     x = np.array([intersections[intersection_number][0], intersections[intersection_number][0]])
                     y = np.array([self.function(intersections[intersection_number][0]), (i-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]])
                     lines[int(lines_per_intersection*intersection_number)+2].set_data(x, y) # Erase Vertical Sample Point
-
-            if (i == num_frames - 1):
-                for x in range(len(lines)):
-                    print(x)
-                    print(lines[x].get_xdata())
-                    print(lines[x].get_ydata())
-                    print()
-
             return lines
 
         anim = animation.FuncAnimation(self.fig, animate, frames=num_frames, interval=.5, blit=True, repeat=False)
@@ -282,15 +194,9 @@ class Shubert_Piyavskii():
 
 if (__name__ == "__main__"):
     def test_func(x):
-        # return x ** 3
         return .5 * np.cos(x) + np.sin(x)
 
     obj = Shubert_Piyavskii(test_func, -1, 5, 3)
-    intersection = obj.find_intersection(obj.lower_bound, obj.upper_bound, obj.function(obj.lower_bound), obj.function(obj.upper_bound))
-    # obj.animate(intersection, obj.lower_bound, obj.upper_bound)
-    obj.iterate(1)
-    obj.animate1(obj.intersections, obj.lower_bound, obj.upper_bound)
-    # obj.animate([1, -3], -2, 4)
-    # obj.animate_sample_line([2, -4])
-    # obj.iterate(0)
+    obj.iterate(7)
     # plt.show()
+    obj.animate(obj.intersections, obj.lower_bound, obj.upper_bound)
