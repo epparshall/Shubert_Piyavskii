@@ -162,7 +162,8 @@ class Shubert_Piyavskii():
         num_sections = len(intersections) * 2 + 1
         num_frames = int(frames_per_section * num_sections) # index "i" will go up to num_frames - 1
 
-        num_lines = len(intersections) * 5 + 2
+        lines_per_intersection = 3
+        num_lines = len(intersections) * lines_per_intersection + 2
         lines = []
 
         # Line 0, 1 = initial lines
@@ -172,12 +173,8 @@ class Shubert_Piyavskii():
 
         for line in range(num_lines):
             # print(((line - 2)) % 3)
-            if ((line - 2) % 5 == 0):
+            if ((line - 2) % lines_per_intersection == 0):
                 line, = self.ax.plot([], [], lw=self.lw, color='b', linestyle='dashed', zorder=0)
-            elif ((line - 1) % 5 == 0 and (line != 1)):
-                line, = self.ax.plot([], [], lw=3*self.lw, color='white',zorder=0)
-            elif ((line) % 5 == 0 and (line != 0)):
-                line, = self.ax.plot([], [], lw=3*self.lw, color='white', zorder=0)
             elif (line == 0 or line == 1):
                 line, = self.ax.plot([], [], lw=self.lw, color='b', zorder=0)
             else:
@@ -196,13 +193,13 @@ class Shubert_Piyavskii():
             section_number = int(i / frames_per_section)
             intersection_number = int((i - frames_per_section) / (2 * frames_per_section))
 
-            if (i <= frames_per_section):
-                x = np.array([left_x, (i)/frames_per_section * (intersections[0][0] - left_x) + left_x])
-                y = np.array([self.function(left_x), (i)/frames_per_section * (intersections[0][1] - self.function(left_x)) + self.function(left_x)])
+            if (i < frames_per_section):
+                x = np.array([left_x, (i+1)/frames_per_section * (intersections[0][0] - left_x) + left_x])
+                y = np.array([self.function(left_x), (i+1)/frames_per_section * (intersections[0][1] - self.function(left_x)) + self.function(left_x)])
                 lines[0].set_data(x, y)
 
-                x = np.array([(i)/frames_per_section * (intersections[0][0] - right_x) + right_x, right_x])
-                y = np.array([(i)/frames_per_section * (intersections[0][1] - self.function(right_x)) + self.function(right_x), self.function(right_x)])
+                x = np.array([(i+1)/frames_per_section * (intersections[0][0] - right_x) + right_x, right_x])
+                y = np.array([(i+1)/frames_per_section * (intersections[0][1] - self.function(right_x)) + self.function(right_x), self.function(right_x)])
                 lines[1].set_data(x, y)
 
                 if ((i / (frames_per_section)) == 1):
@@ -212,36 +209,71 @@ class Shubert_Piyavskii():
                 if (section_number % 2 == 1):
                     x = np.array([intersections[intersection_number][0], intersections[intersection_number][0]])
                     y = np.array([intersections[intersection_number][1], (i-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]])
-                    lines[int(5*intersection_number)+2].set_data(x, y) # Draw Vertical Sample Point
+                    lines[int(lines_per_intersection*intersection_number)+2].set_data(x, y) # Draw Vertical Sample Point
                 else:
                     x_0l = intersections[intersection_number][0]
-                    y_0l = (i-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]
+                    y_0l = ((i+1)-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]
                     x_1l = (1 / (2 * -self.lipschitz_constant)) * (-self.lipschitz_constant * intersections[intersection_number][0] + -self.lipschitz_constant * x_0l + y_0l - intersections[intersection_number][1])
                     y_1l = -self.lipschitz_constant * (x_1l - intersections[intersection_number][0]) + intersections[intersection_number][1]
                     xl = np.array([x_0l, x_1l])
                     yl = np.array([y_0l, y_1l])
 
                     x_0r = intersections[intersection_number][0]
-                    y_0r = (i-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]
+                    y_0r = ((i+1)-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]
                     x_1r = (1 / (2 * self.lipschitz_constant)) * (self.lipschitz_constant * intersections[intersection_number][0] + self.lipschitz_constant * x_0r + y_0r - intersections[intersection_number][1])
                     y_1r = self.lipschitz_constant * (x_1r - intersections[intersection_number][0]) + intersections[intersection_number][1]
                     xr = np.array([x_0r, x_1r])
                     yr = np.array([y_0r, y_1r])
 
-                    lines[int(5*intersection_number)+5].set_data([x_1l, intersections[intersection_number][0]],[y_1l, intersections[intersection_number][1]]) # Erase Left Line
-                    lines[int(5*intersection_number)+6].set_data([x_1r, intersections[intersection_number][0]],[y_1r, intersections[intersection_number][1]]) # Erase Right Line
+                    if (i % frames_per_section == 0):
+                        for line_num in range(int(lines_per_intersection*intersection_number)+2):
+                            x_data = lines[line_num].get_xdata()
+                            y_data = lines[line_num].get_ydata()
 
-                    lines[int(5*intersection_number)+3].set_zorder(2.5)
-                    lines[int(5*intersection_number)+4].set_zorder(2.5)
-                    lines[int(5*intersection_number)-2].set_zorder(0)
-                    lines[int(5*intersection_number)-1].set_zorder(0)
+                            print(intersections[intersection_number])
+                            print(lines[line_num].get_xdata())
+                            print(lines[line_num].get_ydata())
+                            print()
 
-                    lines[int(5*intersection_number)+3].set_data(xl, yl) # Draw New Left Line
-                    lines[int(5*intersection_number)+4].set_data(xr, yr) # Draw New Right Line
+                            if ((np.isclose(x_data, intersections[intersection_number][0], atol=0.01).any()) and (np.isclose(y_data, intersections[intersection_number][1], atol=0.01).any())):
+                                
+                                if (x_data[0] + x_data[1] < 2*intersections[intersection_number][0]):
+                                    self.left_line_num = line_num
+                                    if (x_data[0] < intersections[intersection_number][0]):
+                                        print("HERE1")
+                                        self.keep_left_x = x_data[0]
+                                        self.keep_left_y = y_data[0]
+                                    else:
+                                        print("HERE2")
+                                        self.keep_left_x = x_data[1]
+                                        self.keep_left_y = y_data[1]
+                                if (x_data[0] + x_data[1] > 2*intersections[intersection_number][0]):
+                                    self.right_line_num = line_num
+                                    if (x_data[0] > intersections[intersection_number][0]):
+                                        print("HERE3")
+                                        self.keep_right_x = x_data[0]
+                                        self.keep_right_y = y_data[0]
+                                    else:
+                                        print("HERE4")
+                                        self.keep_right_x = x_data[1]
+                                        self.keep_right_y = y_data[1]
+
+                    lines[int(self.left_line_num)].set_data([self.keep_left_x, x_1l],[self.keep_left_y, y_1l])
+                    lines[int(self.right_line_num)].set_data([self.keep_right_x, x_1r],[self.keep_right_y, y_1r])
+
+                    lines[int(lines_per_intersection*intersection_number)+3].set_data(xl, yl) # Draw New Left Line
+                    lines[int(lines_per_intersection*intersection_number)+4].set_data(xr, yr) # Draw New Right Line
 
                     x = np.array([intersections[intersection_number][0], intersections[intersection_number][0]])
                     y = np.array([self.function(intersections[intersection_number][0]), (i-section_number*frames_per_section)/frames_per_section * (self.function(intersections[intersection_number][0]) - intersections[intersection_number][1]) + intersections[intersection_number][1]])
-                    lines[int(5*intersection_number)+2].set_data(x, y) # Erase Vertical Sample Point
+                    lines[int(lines_per_intersection*intersection_number)+2].set_data(x, y) # Erase Vertical Sample Point
+
+            if (i == num_frames - 1):
+                for x in range(len(lines)):
+                    print(x)
+                    print(lines[x].get_xdata())
+                    print(lines[x].get_ydata())
+                    print()
 
             return lines
 
@@ -256,7 +288,7 @@ if (__name__ == "__main__"):
     obj = Shubert_Piyavskii(test_func, -1, 5, 3)
     intersection = obj.find_intersection(obj.lower_bound, obj.upper_bound, obj.function(obj.lower_bound), obj.function(obj.upper_bound))
     # obj.animate(intersection, obj.lower_bound, obj.upper_bound)
-    obj.iterate(7)
+    obj.iterate(1)
     obj.animate1(obj.intersections, obj.lower_bound, obj.upper_bound)
     # obj.animate([1, -3], -2, 4)
     # obj.animate_sample_line([2, -4])
