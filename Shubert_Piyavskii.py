@@ -24,6 +24,9 @@ class Shubert_Piyavskii():
         self.lw = 2
 
         self.root = Tk.Tk()
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        self.plot_grid_size = 10
 
     def find_intersection(self, x_lower, x_upper, y_lower, y_upper):
         t = (self.lipschitz_constant * x_upper - self.lipschitz_constant * x_lower + y_lower - y_upper) / (2 * self.lipschitz_constant)
@@ -81,15 +84,26 @@ class Shubert_Piyavskii():
             argmin_intersection = np.argmin(self.intersection_ys)
             self.add_sample(self.intersection_xs[argmin_intersection])
 
+        inds = np.argsort([self.intersections[i][1] for i in range(len(self.intersections))])
+        new_intersections = []
+
+        for r in range(len(self.intersections)):
+            new_intersections.append([self.intersections[inds[r]][0], self.intersections[inds[r]][1]])
+
+        self.intersections = new_intersections
+
         # Plot
         self.plot_function()
 
         for i in range(len(self.intersection_xs)):
             self.plot_intersection([self.intersection_xs[i], self.intersection_ys[i]], self.sampled_xs[i], self.sampled_xs[i+1])
 
+    def step_plot(self):
+        self.anim.resume()
+
     def animate(self, intersections, left_x, right_x):
         function_samples = 5000
-        frames_per_section = 200
+        frames_per_section = 100
         num_sections = len(intersections) * 2 + 1
         num_frames = int(frames_per_section * num_sections) # index "i" will go up to num_frames - 1
 
@@ -114,13 +128,19 @@ class Shubert_Piyavskii():
         y = np.array([self.function(x) for x in [self.lower_bound + (self.upper_bound - self.lower_bound)*(i/function_samples) for i in range(int(function_samples))]])
         self.ax.plot(x, y, lw=2, color='orange')
 
-        canvas = FigureCanvasTkAgg(self.fig, master=self.root)
-        canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
+        self.buttonPlot = Tk.Button(self.root, text="Next Step!", command=self.step_plot)
+        self.buttonPlot.grid(row=2+self.plot_grid_size, column=0, padx=40, pady=20, ipadx=150, ipady=50)
 
-        def animate(i):
+        canvas = FigureCanvasTkAgg(self.fig, master=self.root)
+        canvas.get_tk_widget().grid(column=0,row=1, padx=40, pady=20, ipadx=150, ipady=150, rowspan=self.plot_grid_size, columnspan=self.plot_grid_size)
+
+        def animate_func(i):
             # Based on "i" calculate the section number and the intersection number
             section_number = int(i / frames_per_section)
             intersection_number = int((i - frames_per_section) / (2 * frames_per_section))
+
+            if ((i) % frames_per_section == 0 and (i > 0)):
+                self.anim.pause()
 
             if (i < frames_per_section):
                 x = np.array([left_x, (i+1)/frames_per_section * (intersections[0][0] - left_x) + left_x])
@@ -131,9 +151,6 @@ class Shubert_Piyavskii():
                 y = np.array([(i+1)/frames_per_section * (intersections[0][1] - self.function(right_x)) + self.function(right_x), self.function(right_x)])
                 lines[1].set_data(x, y)
 
-                if ((i / (frames_per_section)) == 1):
-                    # time.sleep(5)
-                    pass
             else:
                 if (section_number % 2 == 1):
                     x = np.array([intersections[intersection_number][0], intersections[intersection_number][0]])
@@ -189,14 +206,15 @@ class Shubert_Piyavskii():
                     lines[int(lines_per_intersection*intersection_number)+2].set_data(x, y) # Erase Vertical Sample Point
             return lines
 
-        anim = animation.FuncAnimation(self.fig, animate, frames=num_frames, interval=.5, blit=True, repeat=False)
+        self.anim = animation.FuncAnimation(self.fig, animate_func, frames=num_frames, interval=1, blit=True, repeat=False)
+        self.fig.canvas.mpl_connect('button_press_event', self.step_plot)
+
         Tk.mainloop()
 
 if (__name__ == "__main__"):
     def test_func(x):
-        return .5 * np.cos(x) + np.sin(x)
-
+        return .5 * np.cos(2*np.pi*x) + np.sin(x)
+    
     obj = Shubert_Piyavskii(test_func, -1, 5, 3)
-    obj.iterate(7)
-    # plt.show()
+    obj.iterate()
     obj.animate(obj.intersections, obj.lower_bound, obj.upper_bound)
